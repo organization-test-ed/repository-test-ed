@@ -3,6 +3,12 @@ on:
 
 name: Hello World
 
+env:
+  hashiUrl: https://vault-cluster-id-test-ed-public-vault-ff55f991.2f7cb571.z1.hashicorp.cloud:8200
+  roleName: gha-test-role
+  audience: gha-medium
+  namespace: admin
+
 jobs:
   hello:
     runs-on: ubuntu-latest
@@ -16,3 +22,17 @@ jobs:
     - name: perform token run
       run: |
         echo $(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=gha-medium" | base64)
+      shell: bash
+    - name: Retreive Secrets
+      id: retrieve-secrets
+      uses: hashicorp/vault-action@v2.4.1
+      with:
+        url: ${{ env.hashiUrl }}
+        role: ${{ env.roleName }}
+        method: jwt
+        jwtGithubAudience: ${{ env.audience }}
+        namespace: ${{ env.namespace }}
+        tlsSkipVerify: false
+        exportEnv: true
+        secrets: |
+          secret/data/apikeys deploymentServer | DEPLOYMENT_KEY
